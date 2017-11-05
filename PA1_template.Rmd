@@ -1,0 +1,104 @@
+---
+title: "PA1_template"
+author: "Roman Braun"
+date: "26 10 2017"
+output: html_document
+---
+
+### Downloading and opening data
+
+This document will download and analyze the [Activity Monitoring Data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip).
+First, set working directory and check for existence of the .zip file. Second, 
+unzip the file to get access to activity.csv. Third, open csv and look at the data
+set.
+
+```{r download & open, echo = TRUE}
+wd <- "/Users/romanbraun/Dropbox (Privat)/Coursera/Data Science/5_reproducible_research/W2 - assignment"
+setwd(wd)
+if (file.exists("repdata_data_activity.zip")) {
+        unzip("repdata_data_activity.zip")
+} else {
+        download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", 
+        "repdata_data_activity.zip")
+        unzip("repdata_data_activity.zip")
+}
+df <- read.table("activity.csv", sep=",", header = TRUE)  
+#head(df)
+#dim(df)
+#as.Date(df$date[2])
+df$date <- as.Date(df$date)
+```
+
+### Calculating  mean number of steps per day
+
+You can also embed plots, for example:
+
+```{r steps per day plot, echo=TRUE}
+steps_sum <- aggregate(steps ~ date, data = df, sum) 
+dim(steps_sum)
+# Print steps per day as list
+#steps_sum
+
+
+library(ggplot2)
+
+ggplot(steps_sum, aes(x=date, y=steps)) +
+        geom_bar(stat = "identity")
+        
+```
+
+Mean steps per day:
+```{r}
+mean(steps_sum$steps)
+```
+Median steps per day:
+```{r}
+median(steps_sum$steps)
+```
+
+### What is the daily pattern?
+```{r}
+head(df)
+
+ggplot(df, aes(x = interval, y = steps)) +
+        geom_line(stat="identity")
+
+steps_max <- aggregate(steps ~ interval, data = df, sum) 
+max(steps_max$steps)
+steps_max[steps_max$steps == 10927,]
+```
+
+### Imputing missing values
+```{r}
+sum(is.na(df$steps))
+```
+
+
+### Removing NA values
+Replace NA values by '0'.
+
+```{r}
+dfnew <- df
+dfnew$steps[is.na(dfnew$steps)] <- 0
+sum(is.na(dfnew$steps))
+
+```
+
+### Create new dataset
+```{r}
+write.table(dfnew, "activity_new.csv", sep =";", row.names = FALSE)
+steps_sum_new <- aggregate(steps ~ date, data = dfnew, sum) 
+dim(steps_sum_new)
+# Print steps per day as list
+#steps_sum
+
+
+library(ggplot2)
+
+ggplot(steps_sum_new, aes(x=date, y=steps)) +
+        geom_bar(stat = "identity")
+```
+
+### Conclusion
+There's no difference by imputing missing values, because NA was replace by '0' which makes sense in this context.
+No data available means that there were no steps performed.

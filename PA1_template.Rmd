@@ -1,8 +1,10 @@
 ---
 title: "PA1_template"
 author: "Roman Braun"
-date: "26 10 2017"
-output: html_document
+date: "04 12 2017"
+output: 
+        md_document:
+        variant: markdown_github
 ---
 
 ### Downloading and opening data
@@ -35,17 +37,16 @@ You can also embed plots, for example:
 
 ```{r steps per day plot, echo=TRUE}
 steps_sum <- aggregate(steps ~ date, data = df, sum) 
-dim(steps_sum)
+#dim(steps_sum)
+#steps_sum
 # Print steps per day as list
 #steps_sum
-
-
 library(ggplot2)
+qplot(x = steps_sum$steps, xlab = "steps", binwidth = 500)
 
-ggplot(steps_sum, aes(x=date, y=steps)) +
-        geom_bar(stat = "identity")
-        
 ```
+
+Figure 1: Distribution of sum of steps in dataset
 
 Mean steps per day:
 ```{r}
@@ -58,20 +59,23 @@ median(steps_sum$steps)
 
 ### What is the daily pattern?
 ```{r}
-head(df)
-
-ggplot(df, aes(x = interval, y = steps)) +
+#head(df)
+#class(df)
+steps_int <- aggregate(df, by=list(df$interval), FUN=mean, na.rm=TRUE) 
+#steps_int
+ggplot(steps_int, aes(x = interval, y = steps)) +
         geom_line(stat="identity")
 
-steps_max <- aggregate(steps ~ interval, data = df, sum) 
-max(steps_max$steps)
-steps_max[steps_max$steps == 10927,]
+```
+
+Figure 2: Daily pattern of steps throughout data set
+
+Maximum of steps
+```{r}
+steps_int[which.max(steps_int$steps),c(1,2)]
 ```
 
 ### Imputing missing values
-```{r}
-sum(is.na(df$steps))
-```
 
 
 ### Removing NA values
@@ -83,6 +87,59 @@ dfnew$steps[is.na(dfnew$steps)] <- 0
 sum(is.na(dfnew$steps))
 
 ```
+
+Histogram of total number of steps including imputed values: 
+```{r}
+
+steps_sum <- aggregate(steps ~ date, data = dfnew, sum)
+library(ggplot2)
+qplot(x = steps_sum$steps, xlab = "steps", binwidth = 500)
+```
+
+Figure 3: Distribution of number of steps after imputing missing values
+
+Mean steps per day with imputed values:
+```{r}
+mean(steps_sum$steps)
+```
+Median steps per day with imputed values:
+```{r}
+median(steps_sum$steps)
+```
+
+
+
+### Are there differences in activity patterns between weekdays and weekends?
+```{r}
+df$weekday <- weekdays(as.Date(df$date))
+mofr <- c("Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag")
+saso <- c("Samstag", "Sonntag")
+df_week <- df[df$weekday == mofr,]
+df_week <- subset(df, weekday %in% mofr)
+df_wend <- subset(df, weekday %in% saso)
+sel <- c("steps", "interval")
+summary(df_week)
+
+df_week <- df_week[,sel]
+#head(steps_week)
+steps_week <- aggregate(df_week, by=list(df_week$interval), FUN=mean, na.rm=TRUE) 
+ggplot(steps_week, aes(x = interval, y = steps)) +
+        geom_line(stat="identity")
+
+```
+
+Figure 4: Steps pattern on week days (Monday - Friday).
+
+
+```{r}
+df_wend <- df_wend[,sel]
+steps_wend <- aggregate(df_wend, by=list(df_wend$interval), FUN=mean, na.rm=TRUE) 
+#steps_int
+ggplot(steps_wend, aes(x = interval, y = steps)) +
+        geom_line(stat="identity")
+```
+
+Figure 5: Steps pattern on weekend (Saturday / Sunday).
 
 ### Create new dataset
 ```{r}
@@ -100,5 +157,6 @@ ggplot(steps_sum_new, aes(x=date, y=steps)) +
 ```
 
 ### Conclusion
-There's no difference by imputing missing values, because NA was replace by '0' which makes sense in this context.
+There's no difference in the histogram by imputing missing values, because NA was replace by '0' which makes sense in this context. However, the imputing of "0" had an effect on the calculation of the mean and median number of steps per day.
 No data available means that there were no steps performed.
+Analysis of steps pattern on weekdays and weekends shows substantial differences.
